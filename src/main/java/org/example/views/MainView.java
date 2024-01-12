@@ -28,13 +28,28 @@ import java.util.zip.GZIPOutputStream;
 
 @Route
 public class MainView extends VerticalLayout {
+    private final Button newItem = new VButton("New...", this::createNew)
+            .withTooltip("Creates a new spreadsheet");
+    private final Button closeItem = new VButton("Close", this::close);
+    private final UploadFileHandler openItem = new UploadFileHandler(
+                (i, d) -> openExcellFile(i))
+            .withAcceptedFileTypes(".xls", ".xlsx", "application/vnd.ms-excel")
+            // make the file upload very compact by using
+            // icon and disabling drag and drop area
+            .withDragAndDrop(false)
+            .withUploadButton(new VButton(VaadinIcon.UPLOAD.create())
+                    .withTooltip("Upload .xslx file...")
+            );
 
-    private final UploadFileHandler openItem;
-    private final DynamicFileDownloader saveItem;
-    private final Button closeItem;
-    private final Button newItem;
-    private final Button saveToWebStorage;
-    private final Button openFromWebStorage;
+    private final DynamicFileDownloader saveItem = new DynamicFileDownloader(this::writeXlsFile)
+            .withTooltip("Downloads current file to disk...");
+
+    private final Button saveToWebStorage = new VButton(
+            VaadinIcon.CLOUD_DOWNLOAD.create(), this::saveToWebStorage)
+            .withTooltip("Saves current file to browsers local storage...");
+    private final Button openFromWebStorage = new VButton(
+                VaadinIcon.CLOUD_UPLOAD.create(), this::openFromWebStorage)
+            .withTooltip("Open previously saved file from browsers local storage...");
     private Spreadsheet spreadsheet;
 
     private Component about = new RichText().withMarkDown("""
@@ -47,34 +62,8 @@ This is demo app. Check the [GitHub page](https://github.com/mstahv/e-xell) why 
 
 
     public MainView() {
-        newItem = new VButton("New...", e -> createNew())
-                .withTooltip("Creates a new spreadsheet");
-        openItem = new UploadFileHandler((content, fileName, mimeType) -> {
-            return openExcellFile(content);
-        })
-                .withDragAndDrop(false)
-                .withUploadButton(new VButton(VaadinIcon.UPLOAD.create())
-                        .withTooltip("Upload .xslx file...")
-                )
-                .withAcceptedFileTypes(".xls", ".xlsx", "application/vnd.ms-excel");
-
-        openFromWebStorage = new VButton(VaadinIcon.CLOUD_UPLOAD.create(), this::openFromWebStorage)
-                .withTooltip("Open previously saved file from browsers local storage...");
-
-        saveItem = new DynamicFileDownloader(
-                new VButton(VaadinIcon.DOWNLOAD.create()),
-                "saved-vaadin-e-xell-file.xlsx",
-                this::writeXlsFile);
-
-        saveToWebStorage = new VButton(VaadinIcon.CLOUD_DOWNLOAD.create(), this::saveToWebStorage)
-                .withTooltip("Saves current file to browsers local storage...");
-
-        closeItem = new Button("Close", e -> close());
-        closeItem.setEnabled(true);
-
         Arrays.asList(saveItem, saveToWebStorage, closeItem).forEach(i -> i.setEnabled(false));
         add(new VHorizontalLayout(newItem, openItem, openFromWebStorage, saveItem, saveToWebStorage, closeItem));
-
         add(about);
     }
 
@@ -102,21 +91,13 @@ This is demo app. Check the [GitHub page](https://github.com/mstahv/e-xell) why 
         Arrays.asList(openItem, openFromWebStorage, newItem).forEach(i -> i.setEnabled(!fileOpen));
     }
 
-    public void writeXlsFile(OutputStream out) {
-        try {
+    public void writeXlsFile(OutputStream out) throws IOException {
             spreadsheet.write(out);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
-    public Command openExcellFile(InputStream content) {
-        try {
-            spreadsheet = new Spreadsheet(content);
-            return () -> displaySpreadsheet(); // Execute later in UI thread
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public Command openExcellFile(InputStream content) throws IOException {
+        spreadsheet = new Spreadsheet(content);
+        return () -> displaySpreadsheet(); // Execute later in UI thread
     }
 
     public void saveToWebStorage() {
