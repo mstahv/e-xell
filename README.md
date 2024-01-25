@@ -34,6 +34,7 @@ As a summary, here are some pro's and con's of this kind of web apps:
  * No need for JPA or any other persistence libraries.
  * No hassle in deployment to connect the application server to the database.
  * No database as a bottleneck when horizontally scaling your cluster for a huge deployment.
+ * No need for backups, as long as your code is in GitHub
  * No need to implement authentication to your application, less security concerns. Your users files are controlled by your users.
  * Sharing files with other users is both harder and more complex. In this example files only live shortly during the session in the JVM memory, associated to an open browser window, making it pretty much impossible to share the file permanently with others via server. But on the other hand, files can be sent as an email attachments or on floppy disks and even backed up on tape 🤓 And it is harder for non-skilled users to accidentally share important documents to the whole world ("to anyone with a link"), that is proven to happen a lot with tools like Google Docs. Of course, if the device with the browser (or filesystem) gets compromised, or the application server's RAM, this kind of data can get hacked too!
 
